@@ -63,13 +63,14 @@ type Database struct {
 type MyConfig struct {
 	Service  Service  `json:"service" yaml:"service"`
 	Database Database `json:"database" yaml:"database"`
+
 }
 
 var Config *MyConfig
 
 func LoadConfig(filepath string) {
 	if filepath == "" {
-		return
+		filepath = "~/.sync.yaml"
 	}
 	config, err := ioutil.ReadFile(filepath)
 	if err != nil {

@@ -1,8 +1,9 @@
-module github.com/serialt/cli
+module github.com/serialt/sync
 
 go 1.18
 
 require (
+	github.com/google/go-github/v42 v42.0.0
 	github.com/spf13/pflag v1.0.5
 	go.uber.org/zap v1.21.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0

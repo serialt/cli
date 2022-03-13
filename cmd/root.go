@@ -3,11 +3,13 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	flag "github.com/spf13/pflag"
 
-	"github.com/serialt/cli/config"
-	"github.com/serialt/cli/pkg"
+	"github.com/serialt/sync/config"
+	"github.com/serialt/sync/pkg"
+	"github.com/serialt/sync/service"
 )
 
 func env(key, def string) string {
@@ -60,6 +62,14 @@ func init() {
 	pkg.Sugar = pkg.NewSugarLogger()
 }
 
+type REPO struct {
+	Owner string
+	Repo  string
+}
+
+var MyRepo []REPO
+var BreakWall []string
+
 func Run() {
 
 	if appVersion {
@@ -74,8 +84,35 @@ func Run() {
 		return
 	}
 
-	pkg.Sugar.Info("info log")
-	pkg.Sugar.Info(config.ConfigPath)
+	// pkg.Sugar.Info("info log")
+	// pkg.Sugar.Info(config.ConfigPath)
 
 	// pkg.Sugar.Info(config.LogFile)
+	// service.GetLastestRelease("fatedier", "frp")
+	// service.DownloadReleaseAsset("fatedier", "frp", 56250083)
+
+	// monitor
+	for _, v := range config.Config.GithubRelease {
+		myMonitorRepo := strings.Split(v, "/")
+		MonitorDownload(myMonitorRepo[0], myMonitorRepo[1])
+
+	}
+	for _, v := range config.Config.Monitor {
+
+		myMonitorRepo := strings.Split(v, "/")
+		OtherDownload(myMonitorRepo[0], myMonitorRepo[1])
+	}
+	// down := service.NewGitHubRelease(myM, "frp", "/tmp")
+	// down.Download()
+
+}
+func MonitorDownload(owner, repo string) {
+	down := service.NewGitHubRelease(owner, repo, "/tmp/mirror/monitor")
+	down.Download()
+}
+
+func OtherDownload(owner, repo string) {
+	down := service.NewGitHubRelease(owner, repo, "/tmp/mirror")
+	down.Download()
+
 }
