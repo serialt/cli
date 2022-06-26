@@ -9,6 +9,10 @@ git clone git@github.com:serialt/cli.git
 main分支不带db，cobra分支带有db
 
 
-### cli框架说明
-使用cobra做命令行参数解析，viper读取yaml格式的配置文件，zap和lumberjack的日志管理
+### cli框架依赖说明
+* [cobra](https://github.com/spf13/cobra/blob/master/LICENSE.txt)
+* [viper](https://github.com/spf13/viper/blob/master/LICENSE)
+* [zap](https://github.com/uber-go/zap/blob/master/LICENSE.txt)
+* [lumberjack](https://github.com/natefinch/lumberjack/blob/v2.0/LICENSE)
+* [go-homedir](https://github.com/mitchellh/go-homedir/blob/main/LICENSE)
 
