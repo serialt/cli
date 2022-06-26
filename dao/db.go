@@ -4,27 +4,21 @@ import (
 	"time"
 
 	"github.com/serialt/cli/config"
+	"github.com/serialt/cli/t"
 	"gorm.io/gorm"
 	"moul.io/zapgorm2"
 )
 
-func NewDatabase() *config.Database {
-	ConfigDB := config.Config.Database
-	return &config.Database{
-		Addr:     ConfigDB.Addr,
-		Port:     ConfigDB.Port,
-		DBName:   ConfigDB.DBName,
-		Username: ConfigDB.Username,
-		Password: ConfigDB.Password,
-	}
-}
+// func NewDatabase() *gorm.DB {
+// 	return NewDBConnect(&t.Config.Database)
+// }
 
 // 设置gorm日志使用zap
 var GormLogger zapgorm2.Logger
-var logSugar = config.LogSugar
+var logSugar = t.Sugar
 
 func init() {
-	GormLogger = zapgorm2.New(config.Logger)
+	GormLogger = zapgorm2.New(t.Logger)
 	GormLogger.SetAsDefault()
 }
 

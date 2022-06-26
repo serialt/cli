@@ -17,7 +17,7 @@ func GetPostgreSQLGormDB(mydb *config.Database) *gorm.DB {
 		mydb.Addr,
 		mydb.Username,
 		mydb.Password,
-		mydb.Addr,
+		mydb.DBName,
 		mydb.Port,
 	)
 	for {

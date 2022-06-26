@@ -4,11 +4,20 @@ import (
 	"os"
 	"time"
 
-	"github.com/serialt/cli/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
+
+type ZapLogger struct {
+	LogLevel      string // 日志级别
+	LogFile       string // 日志文件存放路径,如果为空，则输出到控制台
+	LogType       string // 日志类型，支持 txt 和 json ，默认txt
+	LogMaxSize    int    //单位M
+	LogMaxBackups int    // 日志文件保留个数
+	LogMaxAge     int    // 单位天
+	LogCompress   bool   // 压缩轮转的日志
+}
 
 func LevelToZapLevel(level string) zapcore.Level {
 	// 转换日志级别
@@ -25,7 +34,6 @@ func LevelToZapLevel(level string) zapcore.Level {
 		return zapcore.DPanicLevel
 	case "panic":
 		return zapcore.PanicLevel
-
 	case "fatal":
 		return zapcore.FatalLevel
 	default:
@@ -34,11 +42,11 @@ func LevelToZapLevel(level string) zapcore.Level {
 
 }
 
-func NewLogger() *zap.Logger {
+func (lg *ZapLogger) NewMyLogger() *zap.Logger {
 
 	// 设置日志级别
 	atomicLevel := zap.NewAtomicLevel()
-	atomicLevel.SetLevel(LevelToZapLevel(config.LogLevel))
+	atomicLevel.SetLevel(LevelToZapLevel(lg.LogLevel))
 
 	// 输出的消息
 	encoderConfig := zapcore.EncoderConfig{
@@ -60,7 +68,7 @@ func NewLogger() *zap.Logger {
 
 	// 日志输出类型
 	var encoder zapcore.Encoder
-	switch config.LogType {
+	switch lg.LogType {
 	case "json":
 		encoder = zapcore.NewJSONEncoder(encoderConfig)
 	default:
@@ -69,29 +77,41 @@ func NewLogger() *zap.Logger {
 	}
 
 	var core zapcore.Core
-	if config.LogFile == "" {
+	if lg.LogFile == "" {
 		core = zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), atomicLevel)
 	} else {
 		file := zapcore.AddSync(&lumberjack.Logger{
-			Filename:   config.LogFile,       // 日志文件
-			MaxSize:    config.LogMaxSize,    // 单个日志文件大小，单位M
-			MaxBackups: config.LogMaxBackups, // 轮转保留个数
-			MaxAge:     config.LogMaxAge,     // 最长保留时间，单位天
-			Compress:   config.LogCompress,   // 默认不压缩
+			Filename:   lg.LogFile,       // 日志文件
+			MaxSize:    lg.LogMaxSize,    // 单个日志文件大小，单位M
+			MaxBackups: lg.LogMaxBackups, // 轮转保留个数
+			MaxAge:     lg.LogMaxAge,     // 最长保留时间，单位天
+			Compress:   lg.LogCompress,   // 默认不压缩
 		})
 		core = zapcore.NewCore(encoder, zapcore.AddSync(file), atomicLevel)
 	}
 
 	// 开启开发模式，堆栈跟踪: [zap.AddCaller()]
-	Logger := zap.New(core, zap.AddCaller())
-	return Logger
+	myLogger := zap.New(core, zap.AddCaller())
+	return myLogger
 }
 
-func NewSugarLogger() *zap.SugaredLogger {
-	sugraLog := NewLogger()
-	return sugraLog.Sugar()
-
+// NewLogger 自定日志配置可以参考此方法
+func NewLogger(logLevel, logFile string) *zap.Logger {
+	lg := &ZapLogger{
+		LogLevel:      logLevel,
+		LogFile:       logFile,
+		LogType:       "txt",
+		LogMaxSize:    50,
+		LogMaxBackups: 10,
+		LogMaxAge:     365,
+		LogCompress:   true,
+	}
+	return lg.NewMyLogger()
 }
 
-var Logger *zap.Logger
-var Sugar *zap.SugaredLogger
+// NewSugarLogger 创建一个sugar
+func NewSugarLogger(logLevel, logFile string) *zap.SugaredLogger {
+	sugarLog := NewLogger(logLevel, logFile)
+	return sugarLog.Sugar()
+
+}

@@ -35,6 +35,6 @@ func Download(url string, path string) (err error) {
 	if err != nil {
 		panic(err)
 	}
-	ioutil.WriteFile("img1.jpg", data, 0644)
+	ioutil.WriteFile(path, data, 0644)
 	return
 }

@@ -23,5 +23,6 @@ go.work
 build*
 tmp*
 cli*
+cmd/cli*
 
 dist/

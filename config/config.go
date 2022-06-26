@@ -1,47 +1,18 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
-	"runtime"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
-	"go.uber.org/zap"
-	"gopkg.in/yaml.v3"
-	"gorm.io/gorm"
+	"github.com/mitchellh/go-homedir"
 )
 
 // cli里的配置参数，使用类型类似firewalld
-var (
-	Listen   = ":9879"
-	Host     = ""
-	Username = ""
-	Password = ""
-
-	// 日志配置
-	LogLevel      = "info"
-	LogFile       = ""   // 日志文件存放路径,如果为空，则输出到控制台
-	LogType       = ""   // 日志类型，支持 txt 和 json ，默认txt
-	LogMaxSize    = 100  //单位M
-	LogMaxBackups = 3    // 日志文件保留个数
-	LogMaxAge     = 365  // 单位天
-	LogCompress   = true // 压缩轮转的日志
-
-	// 版本信息
-	APPName    = ""
-	Maintainer = ""
-	APPVersion = ""
-	BuildTime  = ""
-	GitCommit  = ""
-	GOVERSION  = runtime.Version()
-	GOOSARCH   = runtime.GOOS + "/" + runtime.GOARCH
-	// 其他配置文件
-	ConfigPath = ""
-
-	Logger   *zap.Logger
-	LogSugar *zap.SugaredLogger
-	DB       *gorm.DB
-)
 
 type Service struct {
 	Host string `json:"host" yaml:"host"`
@@ -60,24 +31,58 @@ type Database struct {
 	ConnMaxLifetime time.Duration `yaml:"connMaxLifetime"`
 }
 
+type Log struct {
+	LogLevel string `yaml:"logLevel"` // 日志级别，支持debug,info,warn,error,panic
+	LogFile  string `yaml:"logFile"`  // 日志文件存放路径,如果为空，则输出到控制台
+}
+
 type MyConfig struct {
+	Log      Log      `json:"log" yaml:"log"`
 	Service  Service  `json:"service" yaml:"service"`
 	Database Database `json:"database" yaml:"database"`
 }
 
-var Config *MyConfig
-
-func LoadConfig(filepath string) {
+// LoadConfig 读取配置文件filepath，使用out接收, 如果filepath为空，默认读取项目根目录config.yaml文件
+func LoadConfig(filepath string) (byteConfg []byte, err error) {
 	if filepath == "" {
-		return
+		rootPath, _ := GetRootPath()
+		filepath = fmt.Sprintf("%s/%s", rootPath, "config.yaml")
+	} else {
+		filepath, err = homedir.Expand(filepath)
+		if err != nil {
+			return
+		}
+		if !Exists(filepath) {
+			err = errors.New(fmt.Sprintf("File not exist, please check it: %v\n", filepath))
+			return
+		}
 	}
-	config, err := ioutil.ReadFile(filepath)
+
+	byteConfg, err = ioutil.ReadFile(filepath)
 	if err != nil {
-		fmt.Printf("read config failed, please check the path: %v , err: %v", filepath, err)
+		err = errors.New(fmt.Sprintf("Read config failed, please check the path: %v , err: %v\n", filepath, err))
 	}
-	err = yaml.Unmarshal(config, &Config)
+	return
+}
+
+// GetRootPath get the project root path
+func GetRootPath() (rootPath string, err error) {
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
-		fmt.Printf("Unmarshal to struct, err: %v", err)
+		return "", err
 	}
-	fmt.Printf("LoadConfig: %v", Config)
+	rootPath = strings.Replace(dir, "\\", "/", -1)
+	return
+}
+
+// Exists 判断文件目录否存在
+func Exists(path string) bool {
+	_, err := os.Stat(path) //os.Stat获取文件信息
+	if err != nil {
+		if os.IsExist(err) {
+			return true
+		}
+		return false
+	}
+	return true
 }
