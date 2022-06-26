@@ -3,7 +3,6 @@ package t
 import (
 	"github.com/serialt/cli/config"
 	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
 
 // 存放一些公共的变量
@@ -20,5 +19,4 @@ var (
 	Config *config.MyConfig
 	Logger *zap.Logger
 	Sugar  *zap.SugaredLogger
-	DB     *gorm.DB
 )

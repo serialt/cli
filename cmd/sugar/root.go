@@ -52,8 +52,6 @@ func initConfig() {
 	// 初始化日志
 	t.Logger = pkg.NewLogger(t.Config.Log.LogLevel, t.Config.Log.LogFile)
 	t.Sugar = t.Logger.Sugar()
-	// 初始化数据库连接
-	// t.DB = dao.NewDBConnect(&t.Config.Database)
 
 }
 
