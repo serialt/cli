@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/mitchellh/go-homedir"
+	"github.com/serialt/cli/dao"
 	"github.com/serialt/cli/pkg"
 	"github.com/serialt/cli/sugar"
 	"github.com/spf13/cobra"
@@ -47,7 +48,7 @@ func initConfig() {
 	}
 	// 初始化日志
 	sugar.Log = pkg.NewSugarLogger(sugar.Config.Log.LogLevel, sugar.Config.Log.LogFile, "", false)
-
+	sugar.DB = dao.NewDBConnect(&sugar.Config.Database)
 }
 
 func init() {
