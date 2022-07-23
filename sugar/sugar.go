@@ -1,4 +1,4 @@
-package t
+package sugar
 
 import (
 	"github.com/serialt/cli/config"
@@ -13,10 +13,7 @@ var (
 	// Username = ""
 	// Password = ""
 
-	// 其他配置文件
-	ConfigFile = "~/.git-mirror.yaml"
-
 	Config *config.MyConfig
-	Logger *zap.Logger
-	Sugar  *zap.SugaredLogger
+	// Logger *zap.Logger
+	Log *zap.SugaredLogger
 )

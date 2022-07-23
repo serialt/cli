@@ -2,14 +2,15 @@ package pkg
 
 import (
 	"os"
-	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-type ZapLogger struct {
+var sugar *zap.SugaredLogger
+
+type Logger struct {
 	LogLevel      string // 日志级别
 	LogFile       string // 日志文件存放路径,如果为空，则输出到控制台
 	LogType       string // 日志类型，支持 txt 和 json ，默认txt
@@ -17,6 +18,7 @@ type ZapLogger struct {
 	LogMaxBackups int    // 日志文件保留个数
 	LogMaxAge     int    // 单位天
 	LogCompress   bool   // 压缩轮转的日志
+	LogColor      bool   // 日志级别分颜色
 }
 
 func LevelToZapLevel(level string) zapcore.Level {
@@ -24,16 +26,10 @@ func LevelToZapLevel(level string) zapcore.Level {
 	switch level {
 	case "debug":
 		return zapcore.DebugLevel
-	case "info":
-		return zapcore.InfoLevel
 	case "warn":
 		return zapcore.WarnLevel
 	case "error":
 		return zapcore.ErrorLevel
-	case "dpanic":
-		return zapcore.DPanicLevel
-	case "panic":
-		return zapcore.PanicLevel
 	case "fatal":
 		return zapcore.FatalLevel
 	default:
@@ -42,7 +38,7 @@ func LevelToZapLevel(level string) zapcore.Level {
 
 }
 
-func (lg *ZapLogger) NewMyLogger() *zap.Logger {
+func (lg *Logger) NewMyLogger() *zap.Logger {
 
 	// 设置日志级别
 	atomicLevel := zap.NewAtomicLevel()
@@ -50,20 +46,23 @@ func (lg *ZapLogger) NewMyLogger() *zap.Logger {
 
 	// 输出的消息
 	encoderConfig := zapcore.EncoderConfig{
-		TimeKey:       "time",
-		LevelKey:      "level",
-		NameKey:       "logger",
-		CallerKey:     "caller",
-		FunctionKey:   zapcore.OmitKey,
-		MessageKey:    "msg",
-		StacktraceKey: "stacktrace",
-		LineEnding:    zapcore.DefaultLineEnding,
-		EncodeLevel:   zapcore.LowercaseLevelEncoder, // zapcore.CapitalLevelEncoder //按级别显示不同颜色
-		EncodeTime: func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-			enc.AppendString(t.Format("2006-01-02 15:04:05")) //指定时间格式
-		},
-		EncodeDuration: zapcore.SecondsDurationEncoder,
-		EncodeCaller:   zapcore.ShortCallerEncoder,
+		TimeKey:        "time",
+		LevelKey:       "level",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		FunctionKey:    zapcore.OmitKey,
+		MessageKey:     "msg",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.CapitalLevelEncoder,    // 设置大写日志级别无颜色
+		EncodeTime:     zapcore.RFC3339TimeEncoder,     // 日期格式 2022-07-23T10:49:47+08:00
+		EncodeDuration: zapcore.SecondsDurationEncoder, // 执行消耗的时间转化成浮点型的秒
+		EncodeCaller:   zapcore.ShortCallerEncoder,     // 以包/文件:行号 格式化调用堆栈
+	}
+	// 简易设置日志级别分颜色
+	if lg.LogColor {
+		// capital, capitalColor, color, default LowercaseLevelEncoder
+		encoderConfig.EncodeLevel.UnmarshalText([]byte("capitalColor"))
 	}
 
 	// 日志输出类型
@@ -96,22 +95,23 @@ func (lg *ZapLogger) NewMyLogger() *zap.Logger {
 }
 
 // NewLogger 自定日志配置可以参考此方法
-func NewLogger(logLevel, logFile string) *zap.Logger {
-	lg := &ZapLogger{
+func NewLogger(logLevel, logFile, logtype string, logColor bool) *zap.Logger {
+	lg := &Logger{
 		LogLevel:      logLevel,
 		LogFile:       logFile,
-		LogType:       "txt",
+		LogType:       logtype,
 		LogMaxSize:    50,
 		LogMaxBackups: 10,
 		LogMaxAge:     365,
 		LogCompress:   true,
+		LogColor:      logColor,
 	}
 	return lg.NewMyLogger()
 }
 
 // NewSugarLogger 创建一个sugar
-func NewSugarLogger(logLevel, logFile string) *zap.SugaredLogger {
-	sugarLog := NewLogger(logLevel, logFile)
+func NewSugarLogger(logLevel, logFile, logType string, logColor bool) *zap.SugaredLogger {
+	sugarLog := NewLogger(logLevel, logFile, logType, logColor)
 	return sugarLog.Sugar()
 
 }
